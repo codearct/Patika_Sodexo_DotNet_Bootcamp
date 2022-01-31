@@ -1,4 +1,6 @@
 using BackgroundJobs.Jobs;
+using BackgroundJobs.Jobs.Abstract;
+using BackgroundJobs.Jobs.Concrete.Hangfire;
 using Business.Abstract;
 using Business.Concrete;
 using Core.DataAccess;
@@ -54,13 +56,15 @@ namespace WebAPI
             services.AddScoped<ICurrencyService, CurrencyService>();
             services.AddScoped<IExchangeRateService, ExchangeRateService>();
 
+            //Recurring Background Jobs 
+            services.AddSingleton<IRecurringJobs, RecurringJobs>();
             //Hangfire
             services.AddHangfire(config => config.UseSqlServerStorage(Configuration["ConnectionStrings:HangfireConnection"]));
             services.AddHangfireServer();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env,IRecurringJobs recurringJobs)
         {
             if (env.IsDevelopment())
             {
@@ -82,9 +86,9 @@ namespace WebAPI
             {
                 endpoints.MapControllers();
             });
-            //Hamgfire recurring job 
-            RecurringJobs.CreateOrUpdateCurrency();
-            RecurringJobs.ChangeSatus();
+            //Hamgfire or Quartz recurring job 
+            recurringJobs.CreateOrUpdateCurrency();
+            recurringJobs.ChangeSatus();
         }
     }
 }
